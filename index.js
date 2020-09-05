@@ -1,65 +1,172 @@
-let cx = document.querySelector('canvas').getContext('2d');
-cx.width = 500
-cx.height = 500
-let now = Date.now()
-let snakeTiles = [0, 0];
-let x = 0,
-    y = 0;
+class Matrix {
+    constructor(width, height, element = (x, y) => undefined) {
+        this.width = width;
+        this.height = height;
+        this.content = [];
 
-let tailX = [0],
-    tailY = [0]
-let ctr = -1
-let countdown = false,
-    stillRunning = true;
-let lastUsed = "ArrowDown",
-    lastUsedIndex = ""
-let arrayX = [],
-    arrayY = [];
-const scale = 20
-const speed = 200
-
-addCandy()
-makeDisplay(x, y)
-events()
-requestAnimationFrame(hold)
-
-
-
-function events() { //player
-    document.body.addEventListener("keydown", event => {
-        event.preventDefault()
-        if (event.key == "ArrowUp" && lastUsed != "ArrowDown") lastUsedIndex = event.key
-        if (event.key == "ArrowDown" && lastUsed != "ArrowUp") lastUsedIndex = event.key
-        if (event.key == "ArrowLeft" && lastUsed != "ArrowRight") lastUsedIndex = event.key
-        if (event.key == "ArrowRight" && lastUsed != "ArrowLeft") lastUsedIndex = event.key
-    })
-}
-
-function makeDisplay() {//game
-    for (let i = 0; i < arrayX.length; i++) {
-        if (arrayX[i] == x && arrayY[i] == y) {
-            stillRunning = false;
-            cx.fillStyle = 'lightgray';
-            cx.fillRect(0, 0, cx.width, cx.height);
-            cx.fillStyle = 'red'
-            cx.textAlign = 'center'
-            cx.font = "38px Arial";
-            cx.fillText("GAME LOST", cx.width / 2, cx.height / 2);
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                this.content[y * width + x] = element(x, y);
+            }
         }
     }
 
-    arrayX = [];
-    arrayY = [];
-
-    cx.fillStyle = 'black';
-    cx.strokeRect(0, 0, cx.width, cx.height);
-
-    cx.fillStyle = 'gray';
-    cx.fillRect(x, y, scale, scale);
+    get(x, y) {
+        return this.content[y * this.width + x];
+    }
+    set(x, y, value) {
+        this.content[y * this.width + x] = value;
+    }
 }
 
 
-function addCandy() {//game
+class player {
+    constructor(x, y) {
+
+        this.x = x * scale;
+        this.y = y * scale;
+        this.tailX = [0];
+        this.tailY = [0];
+        this.ctr = -4;
+        this.usedSnakeSpaceX = [];
+        this.usedSnakeSpaceY = [];
+
+        this.lastUsed = "ArrowDown";
+        this.lastUsedIndex = ""
+
+        this.makeDisplay(this.x, this.y);
+        this.events()
+    }
+
+
+    makeDisplay(x, y) {
+
+        cx.fillStyle = 'black';
+        cx.strokeRect(0, 0, cx.width, cx.height);
+
+        cx.fillStyle = 'gray';
+        cx.fillRect(x, y, scale, scale);
+    }
+
+
+    events() {
+        document.body.addEventListener("keydown", event => {
+            event.preventDefault()
+            if (event.key == "ArrowUp" && this.lastUsed != "ArrowDown") this.lastUsedIndex = event.key
+            if (event.key == "ArrowDown" && this.lastUsed != "ArrowUp") this.lastUsedIndex = event.key
+            if (event.key == "ArrowLeft" && this.lastUsed != "ArrowRight") this.lastUsedIndex = event.key
+            if (event.key == "ArrowRight" && this.lastUsed != "ArrowLeft") this.lastUsedIndex = event.key
+        })
+    }
+
+
+    clearDebris(ctr) {
+        cx.clearRect(this.tailX[ctr], this.tailY[ctr], scale, scale)
+    }
+
+
+    move() { //player
+        this.lastUsed = this.lastUsedIndex
+        this.ctr++
+        this.tailX.push(this.x)
+        this.tailY.push(this.y)
+
+        for (let i = this.ctr; i < this.tailX.length; i++) {
+            this.usedSnakeSpaceX.push(this.tailX[i])
+            this.usedSnakeSpaceY.push(this.tailY[i])
+        }
+
+        if (this.x == randomX && this.y == randomY) {
+            this.ctr--;
+            addCandy()
+        }
+        if (this.lastUsed == "ArrowUp") {
+            this.clearDebris(this.ctr)
+            if (this.y <= 0) {
+                this.y = cx.height
+                this.makeDisplay(this.x, this.y)
+            } else this.makeDisplay(this.x, this.y -= scale)
+        }
+        if (this.lastUsed == "ArrowDown") {
+            this.clearDebris(this.ctr)
+            if (this.y >= cx.height) {
+                this.y = 0
+                this.makeDisplay(this.x, this.y)
+            } else this.makeDisplay(this.x, this.y += scale)
+        }
+        if (this.lastUsed == "ArrowLeft") {
+            this.clearDebris(this.ctr)
+            if (this.x <= 0) {
+                this.x = cx.width
+                this.makeDisplay(this.x, this.y)
+            } else this.makeDisplay(this.x -= scale, this.y)
+        }
+        if (this.lastUsed == "ArrowRight") {
+            this.clearDebris(this.ctr)
+            if (this.x >= cx.width) {
+                this.x = 0
+                this.makeDisplay(this.x, this.y)
+            } else this.makeDisplay(this.x += scale, this.y)
+        }
+
+        everyUsedSquareX.push(this.usedSnakeSpaceX)
+        everyUsedSquareY.push(this.usedSnakeSpaceY)
+
+        this.usedSnakeSpaceX = [];
+        this.usedSnakeSpaceY = [];
+    }
+    colisionCheck() {
+        if (this.ctr > 12) {
+            for (let i = 0; i < everyUsedSquareX.length; i++) {
+                if (everyUsedSquareX[i] == this.x && everyUsedSquareY[i] == this.y) {
+                    for (let i = 0; i < usedSnakeSpaceX.length; i++) {
+
+                    }
+                    everyUsedSquareX = everyUsedSquareX.concat(this.usedSnakeSpaceX)
+                    everyUsedSquareY = everyUsedSquareY.concat(this.usedSnakeSpaceY)
+                    stillRunning = false;
+
+                    cx.fillStyle = 'lightgray';
+                    cx.fillRect(0, 0, cx.width, cx.height);
+                    /*
+                    cx.fillStyle = 'red'
+                    cx.textAlign = 'center'
+                    cx.font      = "38px Arial";
+                    cx.fillText("GAME LOST", cx.width / 2, cx.height / 2);
+                    */
+                }
+            }
+        }
+    }
+}
+
+
+//needed to run the game
+
+let cx = document.querySelector('canvas').getContext('2d');
+cx.width = 500
+cx.height = 500
+
+const scale = 20
+const speed = 200
+
+//required from server
+
+let everyUsedSquareX = [],
+    everyUsedSquareY = [];
+stillRunning = true;
+
+let player1 = new player(10, 10)
+let player2 = new player(12, 12)
+
+addCandy();
+
+let now = Date.now()
+requestAnimationFrame(hold);
+
+
+
+function addCandy() { //game
     cx.fillStyle = 'gold'
     randomX = Math.floor(Math.random() * cx.width)
     randomX = randomX - randomX % scale
@@ -69,65 +176,20 @@ function addCandy() {//game
 
 }
 
-function clearDebris(ctr) {//player
-    cx.clearRect(tailX[ctr], tailY[ctr], scale, scale)
-}
 
-
-function move() {//player
-    lastUsed = lastUsedIndex
-    ctr++
-    tailX.push(x)
-    tailY.push(y)
-
-    for (let i = ctr; i < tailX.length; i++) {
-        arrayX.push(tailX[i])
-        arrayY.push(tailY[i])
-    }
-
-    if (x == randomX && y == randomY) {
-        ctr--;
-        addCandy()
-    }
-    if (lastUsed == "ArrowUp") {
-        clearDebris(ctr)
-        if (y <= 0) {
-            y = cx.height
-            makeDisplay(x, y)
-        } else makeDisplay(x, y -= scale)
-    }
-    if (lastUsed == "ArrowDown") {
-        clearDebris(ctr)
-        if (y >= cx.height) {
-            y = 0
-            makeDisplay(x, y)
-        } else makeDisplay(x, y += scale)
-    }
-    if (lastUsed == "ArrowLeft") {
-        clearDebris(ctr)
-        if (x <= 0) {
-            x = cx.width
-            makeDisplay(x, y)
-        } else makeDisplay(x -= scale, y)
-    }
-    if (lastUsed == "ArrowRight") {
-        clearDebris(ctr)
-        if (x >= cx.width) {
-            x = 0
-            makeDisplay(x, y)
-        } else makeDisplay(x += scale, y)
-    }
-}
-
-
-
-function hold(timestamp) {//game
+function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
         requestAnimationFrame(hold)
 
-        move()
+        player1.move()
+        player2.move()
 
+        player1.colisionCheck()
+        player2.colisionCheck()
+        console.log(everyUsedSquareX)
+        everyUsedSquareX = [];
+        everyUsedSquareY = [];
     } else if (stillRunning) {
         requestAnimationFrame(hold)
     }
