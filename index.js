@@ -53,6 +53,7 @@ class player {
             this.tailX.push(this.x)
             this.tailY.push(this.y)
 
+
             for (let i = this.ctr; i < this.tailX.length; i++) {
                 usedSquaresX.push(this.tailX[i])
                 usedSquaresY.push(this.tailY[i])
@@ -65,7 +66,7 @@ class player {
                 this.ctr--;
                 addCandy()
             }
-            
+
             if (this.lastUsed == this.kbd[0]) {
                 this.clearDebris(this.ctr)
                 if (this.y <= 0) {
@@ -132,17 +133,17 @@ let cx = document.querySelector('canvas').getContext('2d');
 cx.width = 500
 cx.height = 500
 
-const scale = 50
-const speed = 200
+const scale = 20
+const speed = 150
+
+stillRunning = true;
 
 //required from server
 
 let usedSquaresX = [],
     usedSquaresY = [];
-stillRunning = true;
 
 let player1 = new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'red');
-console.log(player1)
 let player2 = new player(12, 12, ['w', 's', 'a', 'd'], 'green')
 
 addCandy();
@@ -189,6 +190,8 @@ function hold(timestamp) { //game
         if (!usedSquaresX.length) endGame()
         usedSquaresX = [];
         usedSquaresY = [];
+
+
     } else if (stillRunning) {
         requestAnimationFrame(hold)
     }

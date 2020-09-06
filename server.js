@@ -5,52 +5,55 @@ const {
     readFileSync
 } = require("fs");
 
+var {parse} = require("url");
+
+module.exports = class Router {
+  constructor() {
+    this.routes = [];
+  }
+  add(method, url, handler) {
+    this.routes.push({method, url, handler});
+  }
+  resolve(context, request) {
+    let path = parse(request.url).pathname;
+
+    for (let {method, url, handler} of this.routes) {
+      let match = url.exec(path);
+      if (!match || request.method != method) continue;
+      let urlParts = match.slice(1).map(decodeURIComponent);
+      return handler(context, ...urlParts, request);
+    }
+    return null;
+  }
+};
+
+
 
 let file = readFileSync("index.html", "utf8")
+let script = readFileSync("../MultiplayerSnakeGame/index.js", "utf8")
 
-createServer((request, response) => {
+let server = createServer((request, response) => {
     response.writeHead(200, {
         'Content-Type': 'text/html'
     });
-
     response.write(file);
+    response.end(`<script>${script}</script>`);
 
-    response.writeHead(200, {
-        'Content-Type': 'text/javascript'
-    });
-
-    response.end();
-
-
+    if (request.method === 'POST') {
+        readStream(request)
+    }
 
 }).listen(8000);
 
 
-class Matrix {
-    constructor(width, height, element = (x, y) => undefined) {
-        this.width = width;
-        this.height = height;
-        this.content = [];
-
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                this.content[y * width + x] = element(x, y);
-            }
-        }
-    }
-
-    get(x, y) {
-        return this.content[y * this.width + x];
-    }
-    set(x, y, value) {
-        this.content[y * this.width + x] = value;
-    }
-    
+function readStream(stream) {
+    return new Promise((resolve, reject) => {
+        let data = "";
+        stream.on("error", reject);
+        stream.on("data", chunk => data += chunk.toString());
+        stream.on("end", () => {
+            resolve(data), console.log(data)
+        });
+    });
 }
 
-
-let matrix = new Matrix(50, 50);
-
-function newPlayer() {
-    matrix.set(Math.floor(Math.random() * matrix.width), Math.floor(Math.random() * matrix.height), true);
-}
