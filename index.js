@@ -9,6 +9,7 @@ class player {
         this.usedSnakeSpaceY = [];
         this.go = true;
         this.kbd = keyboard;
+        this.snakeLength = -this.ctr
         this.color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`;
 
         this.lastUsed = "";
@@ -37,6 +38,7 @@ class player {
 
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
+        
     }
 
 
@@ -48,6 +50,10 @@ class player {
             if (event.key == this.kbd[2] && this.lastUsed != this.kbd[3]) this.lastUsedIndex = event.key
             if (event.key == this.kbd[3] && this.lastUsed != this.kbd[2]) this.lastUsedIndex = event.key
             console.log(event.key)
+
+            if (event.key == 'Enter') {
+                this.go = true
+            }
         })
     }
 
@@ -76,6 +82,7 @@ class player {
 
             if (this.x == randomX && this.y == randomY) {
                 this.ctr--;
+                this.snakeLength++
                 addCandy()
             }
 
@@ -115,6 +122,8 @@ class player {
         if (this.ctr > 12) {
             for (let i = 0; i < usedSquaresX.length; i++) {
                 if (usedSquaresX[i] == this.x && usedSquaresY[i] == this.y) {
+                    this.ctr += this.snakeLength - 1
+                    this.snakeLength = 1
                     this.delSnake()
 
                     this.usedSnakeSpaceX = [];
@@ -171,10 +180,8 @@ requestAnimationFrame(hold);
 
 function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.random() * cx.height)) { //game
     cx.fillStyle = 'gold'
-    randomX = x
     randomX = x - x % scale
-    randomY = y
-    randomY = randomY - randomY % scale
+    randomY = y - y % scale
 
     if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
     else cx.fillRect(randomX, randomY, scale, scale);
@@ -200,14 +207,15 @@ function hold(timestamp) { //game
 
         for (let player of players) {
             player.move()
+        }
+        for (let player of players) {
             player.colisionCheck()
-
-            if (!player.go) 
         }
 
         if (!usedSquaresX.length) endGame()
         usedSquaresX = [];
         usedSquaresY = [];
+
 
 
     } else if (stillRunning) {
