@@ -14,6 +14,17 @@ class player {
         this.lastUsed = "";
         this.lastUsedIndex = ""
 
+        this.shift = addEventListener("keydown", event => {
+            console.log(event.key)
+            if (this.shift && event.key == 'Shift') {
+                this.shift = !this.shift;
+                speed = speed * 2
+            } else if (event.key == 'Shift') {
+                this.shift = !this.shift;
+                speed = speed / 2
+            }
+        })
+
         this.makeDisplay(this.x, this.y);
         this.events()
     }
@@ -43,6 +54,7 @@ class player {
 
     clearDebris(ctr) {
         cx.clearRect(this.tailX[ctr], this.tailY[ctr], scale, scale)
+        if (this.tailX[ctr] == randomX && this.tailY[ctr] == randomY) addCandy(randomX, randomY)
     }
 
 
@@ -134,7 +146,7 @@ cx.width = 500
 cx.height = 500
 
 const scale = 20
-const speed = 150
+let speed = 150
 
 stillRunning = true;
 
@@ -143,8 +155,12 @@ stillRunning = true;
 let usedSquaresX = [],
     usedSquaresY = [];
 
-let player1 = new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'red');
-let player2 = new player(12, 12, ['w', 's', 'a', 'd'], 'green')
+
+
+let players = [
+    new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'red'),
+    new player(12, 12, ['w', 's', 'a', 'd'], 'green')
+]
 
 addCandy();
 
@@ -153,12 +169,13 @@ requestAnimationFrame(hold);
 
 
 
-function addCandy() { //game
+function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.random() * cx.height)) { //game
     cx.fillStyle = 'gold'
-    randomX = Math.floor(Math.random() * cx.width)
-    randomX = randomX - randomX % scale
-    randomY = Math.floor(Math.random() * cx.height)
+    randomX = x
+    randomX = x - x % scale
+    randomY = y
     randomY = randomY - randomY % scale
+
     if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
     else cx.fillRect(randomX, randomY, scale, scale);
 
@@ -181,11 +198,12 @@ function hold(timestamp) { //game
         now = Date.now()
         requestAnimationFrame(hold)
 
-        player1.move()
-        player2.move()
+        for (let player of players) {
+            player.move()
+            player.colisionCheck()
 
-        player1.colisionCheck()
-        player2.colisionCheck()
+            if (!player.go) 
+        }
 
         if (!usedSquaresX.length) endGame()
         usedSquaresX = [];
