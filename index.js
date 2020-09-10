@@ -38,7 +38,7 @@ class player {
 
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
-        
+
     }
 
 
@@ -54,6 +54,35 @@ class player {
             if (event.key == 'Enter') {
                 this.go = true
             }
+        })
+
+        document.body.addEventListener("touchstart", event => {
+            let directionX = event.changedTouches['0'].clientX,
+                directionY = event.changedTouches['0'].clientY;
+
+            // if (!this.go) this.go = true;
+
+
+            document.body.addEventListener("touchmove", event => {
+
+                if (directionX - event.changedTouches['0'].clientX > 50 && this.lastUsed != this.kbd[3]) {
+                    console.log('left'), directionX = event.changedTouches['0'].clientX;
+                    this.lastUsedIndex = this.kbd[2]
+                }
+                if (directionX - event.changedTouches['0'].clientX < -50 && this.lastUsed != this.kbd[2]) {
+                    console.log('right'), directionX = event.changedTouches['0'].clientX;
+                    this.lastUsedIndex = this.kbd[3]
+                }
+                if (directionY - event.changedTouches['0'].clientY > 50 && this.lastUsed != this.kbd[1]) {
+                    console.log('up'), directionY = event.changedTouches['0'].clientY;
+                    this.lastUsedIndex = this.kbd[0]
+                }
+                if (directionY - event.changedTouches['0'].clientY < -50 && this.lastUsed != this.kbd[0]) {
+                    console.log('down'), directionY = event.changedTouches['0'].clientY;
+                    this.lastUsedIndex = this.kbd[1]
+                }
+                document.body.removeEventListener('touchmove', event)
+            })
         })
     }
 
