@@ -1,9 +1,9 @@
 class player {
-    constructor(x, y, keyboard, color) {
+    constructor(x, y, keyboard, name) {
         this.x = x * scale;
         this.y = y * scale;
-        this.tailX = [0];
-        this.tailY = [0];
+        this.usedSnakeSpaceX = [0];
+        this.usedSnakeSpaceY = [0];
         this.ctr = -6;
         this.usedSnakeSpaceX = [];
         this.usedSnakeSpaceY = [];
@@ -28,6 +28,12 @@ class player {
 
         this.makeDisplay(this.x, this.y);
         this.events()
+
+        this.name = name;
+        let elem = document.createElement("p")
+        let text = document.createTextNode(`${this.name}, score: ${this.snakeLength + 1}`)
+        elem.appendChild(text)
+        this.text = document.body.appendChild(elem)
     }
 
 
@@ -38,6 +44,9 @@ class player {
 
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
+        
+
+        //drawOtherPlayers(this.usedSnakeSpaceX, this.usedSnakeSpaceY)
 
     }
 
@@ -66,19 +75,23 @@ class player {
             document.body.addEventListener("touchmove", event => {
 
                 if (directionX - event.changedTouches['0'].clientX > 50 && this.lastUsed != this.kbd[3]) {
-                    console.log('left'), directionX = event.changedTouches['0'].clientX;
+                    console.log('left');
+                    directionX = event.changedTouches['0'].clientX;
                     this.lastUsedIndex = this.kbd[2]
                 }
                 if (directionX - event.changedTouches['0'].clientX < -50 && this.lastUsed != this.kbd[2]) {
-                    console.log('right'), directionX = event.changedTouches['0'].clientX;
+                    console.log('right');
+                    directionX = event.changedTouches['0'].clientX;
                     this.lastUsedIndex = this.kbd[3]
                 }
                 if (directionY - event.changedTouches['0'].clientY > 50 && this.lastUsed != this.kbd[1]) {
-                    console.log('up'), directionY = event.changedTouches['0'].clientY;
+                    console.log('up');
+                    directionY = event.changedTouches['0'].clientY;
                     this.lastUsedIndex = this.kbd[0]
                 }
                 if (directionY - event.changedTouches['0'].clientY < -50 && this.lastUsed != this.kbd[0]) {
-                    console.log('down'), directionY = event.changedTouches['0'].clientY;
+                    console.log('down');
+                    directionY = event.changedTouches['0'].clientY;
                     this.lastUsedIndex = this.kbd[1]
                 }
                 document.body.removeEventListener('touchmove', event)
@@ -88,8 +101,8 @@ class player {
 
 
     clearDebris(ctr) {
-        cx.clearRect(this.tailX[ctr], this.tailY[ctr], scale, scale)
-        if (this.tailX[ctr] == randomX && this.tailY[ctr] == randomY) addCandy(randomX, randomY)
+        cx.clearRect(this.usedSnakeSpaceX[ctr], this.usedSnakeSpaceY[ctr], scale, scale)
+        if (this.usedSnakeSpaceX[ctr] == randomX && this.usedSnakeSpaceY[ctr] == randomY) addCandy(randomX, randomY)
     }
 
 
@@ -97,34 +110,33 @@ class player {
         if (this.go) {
             this.lastUsed = this.lastUsedIndex
             this.ctr++
-            this.tailX.push(this.x)
-            this.tailY.push(this.y)
+            this.usedSnakeSpaceX.push(this.x)
+            this.usedSnakeSpaceY.push(this.y)
 
 
-            for (let i = this.ctr; i < this.tailX.length; i++) {
-                usedSquaresX.push(this.tailX[i])
-                usedSquaresY.push(this.tailY[i])
-
-                this.usedSnakeSpaceX.push(this.tailX[i])
-                this.usedSnakeSpaceY.push(this.tailY[i])
+            for (let i = this.ctr; i < this.usedSnakeSpaceX.length; i++) {
+                locallyUsedSquaresX.push(this.usedSnakeSpaceX[i])
+                locallyUsedSquaresY.push(this.usedSnakeSpaceY[i])
             }
 
             if (this.x == randomX && this.y == randomY) {
                 this.ctr--;
                 this.snakeLength++
+                this.text.innerHTML = `${this.name}, score: ${this.snakeLength + 1}`;
+
                 addCandy()
             }
 
             if (this.lastUsed == this.kbd[0]) {
                 this.clearDebris(this.ctr)
                 if (this.y <= 0) {
-                    this.y = cx.height
+                    this.y = cx.height - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y -= scale)
             }
             if (this.lastUsed == this.kbd[1]) {
                 this.clearDebris(this.ctr)
-                if (this.y >= cx.height) {
+                if (this.y >= cx.height - scale) {
                     this.y = 0
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y += scale)
@@ -132,13 +144,13 @@ class player {
             if (this.lastUsed == this.kbd[2]) {
                 this.clearDebris(this.ctr)
                 if (this.x <= 0) {
-                    this.x = cx.width
+                    this.x = cx.width - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x -= scale, this.y)
             }
             if (this.lastUsed == this.kbd[3]) {
                 this.clearDebris(this.ctr)
-                if (this.x >= cx.width) {
+                if (this.x >= cx.width - scale) {
                     this.x = 0
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x += scale, this.y)
@@ -149,10 +161,12 @@ class player {
 
     colisionCheck() {
         if (this.ctr > 12) {
-            for (let i = 0; i < usedSquaresX.length; i++) {
-                if (usedSquaresX[i] == this.x && usedSquaresY[i] == this.y) {
+            for (let i = 0; i < locallyUsedSquaresX.length; i++) {
+                if (locallyUsedSquaresX[i] == this.x && locallyUsedSquaresY[i] == this.y) {
                     this.ctr += this.snakeLength - 1
                     this.snakeLength = 1
+                    this.text.innerHTML = `${this.name}, score: ${this.snakeLength + 1}`;
+
                     this.delSnake()
 
                     this.usedSnakeSpaceX = [];
@@ -169,9 +183,11 @@ class player {
     delSnake() {
         for (let i = 0; i < this.usedSnakeSpaceX.length; i++) {
             cx.clearRect(this.usedSnakeSpaceX[i], this.usedSnakeSpaceY[i], scale, scale);
-            usedSquaresX.filter(element => this.usedSnakeSpaceX[i] != element)
-            usedSquaresY.filter(element => this.usedSnakeSpaceY[i] != element)
+            locallyUsedSquaresX.filter(element => this.usedSnakeSpaceX[i] != element)
+            locallyUsedSquaresY.filter(element => this.usedSnakeSpaceY[i] != element)
             this.go = false
+            this.text.innerHTML = `${this.name}, score: Dead`;
+
         }
     }
 }
@@ -184,20 +200,19 @@ cx.width = 500
 cx.height = 500
 
 const scale = 20
-let speed = 150
+let speed = 1000
 
 stillRunning = true;
 
 //required from server
 
-let usedSquaresX = [],
-    usedSquaresY = [];
+let locallyUsedSquaresX = [],
+    locallyUsedSquaresY = [];
 
 
 
 let players = [
-    new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'red'),
-    new player(12, 12, ['w', 's', 'a', 'd'], 'green')
+    new player(Math.floor(Math.random() * cx.width / scale), Math.floor(Math.random() * cx.height / scale), ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1')
 ]
 
 addCandy();
@@ -212,7 +227,7 @@ function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.
     randomX = x - x % scale
     randomY = y - y % scale
 
-    if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
+    if (locallyUsedSquaresX.includes(randomX) && locallyUsedSquaresY.includes(randomY)) addCandy()
     else cx.fillRect(randomX, randomY, scale, scale);
 
 }
@@ -228,11 +243,19 @@ function endGame() {
 }
 
 
+function drawOtherPlayers(arrX, arrY) {
+    for (let i = 0; i < arrX.length; i++) {
+        cx.fillStyle = 'gray';
+        cx.fillRect(arrX[i], arrY[i], scale, scale);
+    }
+    cx.fillStyle = 'white';
+    cx.fillRect(arrX[0], arrY[0], scale, scale);
+}
+
 
 function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
-        requestAnimationFrame(hold)
 
         for (let player of players) {
             player.move()
@@ -241,13 +264,36 @@ function hold(timestamp) { //game
             player.colisionCheck()
         }
 
-        if (!usedSquaresX.length) endGame()
-        usedSquaresX = [];
-        usedSquaresY = [];
+        if (!locallyUsedSquaresX.length) endGame()
+
+        let locallyUsedSquares = {
+            x: locallyUsedSquaresX,
+            y: locallyUsedSquaresY
+        }
 
 
+        fetch('http://localhost:8080/', {
+                method: 'POST',
+                'content-Type': 'application/json',
+                body: JSON.stringify(locallyUsedSquares),
+                headers: new Headers(),
+            })
+            .then(response => response.json())
+            .then(json => {
+                console.log(json)
+                drawOtherPlayers(json.x, json.y)
+                locallyUsedSquaresX = json.x;
+                locallyUsedSquaresY = json.y;
+            })
+
+
+        cx.fillStyle = 'white';
+        //cx.fillRect(0, 0, cx.width, cx.height)
+
+        requestAnimationFrame(hold)
 
     } else if (stillRunning) {
+        
         requestAnimationFrame(hold)
     }
 

@@ -1,52 +1,44 @@
-#!/usr/bin/env node
-var WebSocketServer = require('websocket').server;
-var http = require('http');
- 
-var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
-    response.writeHead(404);
-    response.end();
-});
-server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
-});
- 
-wsServer = new WebSocketServer({
-    httpServer: server,
-    // You should not use autoAcceptConnections for production
-    // applications, as it defeats all standard cross-origin protection
-    // facilities built into the protocol and the browser.  You should
-    // *always* verify the connection's origin and decide whether or not
-    // to accept it.
-    autoAcceptConnections: false
-});
- 
-function originIsAllowed(origin) {
-  // put logic here to detect whether the specified origin is allowed.
-  return true;
+const {
+    createServer
+} = require('http')
+let allUsedSpaces = {
+    x: [],
+    y: [],
 }
- 
-wsServer.on('request', function(request) {
-    if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-      return;
+let now = Date.now()
+
+const server = createServer();
+server.on('request', (request, response) => {
+
+    if (request.method === 'POST') {
+        readStream(request)
     }
-    
-    var connection = request.accept('echo-protocol', request.origin);
-    console.log((new Date()) + ' Connection accepted.');
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
-        }
-        else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
-        }
+    response.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
     });
-    connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+
+    response.end(JSON.stringify(allUsedSpaces))
+
+    if (Date.now() - now >= 1000) {
+        now = Date.now();
+        allUsedSpaces.x = [];
+        allUsedSpaces.y = [];
+    }
+
+}).listen(8080);
+
+
+function readStream(stream) {
+    return new Promise((resolve, reject) => {
+        let data = "";
+        stream.on("error", reject);
+        stream.on("data", chunk => data += chunk.toString());
+        stream.on("end", () => {
+            resolve(data);
+            allUsedSpaces.x = allUsedSpaces.x.concat(0, 0, JSON.parse(data).x);
+            allUsedSpaces.y = allUsedSpaces.y.concat(0, 0, JSON.parse(data).y);
+
+        });
     });
-});
+}
