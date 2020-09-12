@@ -8,9 +8,9 @@ class a {
         this.x = [];
         this.y = [];
     }
-    pushSnake(id, arrX, arrY) {
-        this.x[id] = arrX;
-        this.y[id] = arrY;
+    pushSnake(arrX, arrY) {
+        this.x.push(arrX);
+        this.y.push(arrY);
     }
     getSnake() {
         return JSON.stringify(this.x, this.y);
@@ -37,10 +37,12 @@ server.on('request', (request, response) => {
 
     response.end(JSON.stringify(allUsedSpaces))
 
-    if (Date.now() - now >= 1000) {
-        now = Date.now();
+    if (Date.now() - now > 1000) {
         allUsedSpaces.clearUsed()
+        now = Date.now()
+        console.log('here')
     }
+
 
 }).listen(8080);
 
@@ -52,8 +54,10 @@ function readStream(stream) {
         stream.on("data", chunk => data += chunk.toString());
         stream.on("end", () => {
             resolve(data);
-            allUsedSpaces.pushSnake(JSON.parse(data).id, JSON.parse(data).x, JSON.parse(data).y);
+            allUsedSpaces.pushSnake(JSON.parse(data).x, JSON.parse(data).y);
             //console.log(allUsedSpaces)
         });
     });
 }
+
+

@@ -194,10 +194,10 @@ class player {
 //needed to run the game
 
 let cx = document.querySelector('canvas').getContext('2d');
-cx.width = 500
-cx.height = 500
+cx.width = 200
+cx.height = 200
 
-const scale = 20
+const scale = 10
 let speed = 1000
 let id = 1 //Math.floor(Math.random() * 1000);
 
@@ -242,22 +242,24 @@ function endGame() {
 }
 
 
-function drawOtherPlayers(arrX, arrY) {
+function drawOtherPlayers(arrX = [], arrY) {
     cx.fillStyle = 'gray';
-    for (let i = 0; i < arrX.length; i++) {
+    for (let i = 1; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
     }
 }
 
-function delOtherPlayers(arrX = [], arrY = []) {
+function delOtherPlayers() {
     cx.fillStyle = 'white';
-    for (let i = 0; i < arrX.length; i++) {
-        cx.fillRect(arrX[i], arrY[i], scale, scale);
-    }
+    cx.fillRect(0, 0, cx.width, cx.height);
+
+    addCandy(randomX, randomY)
 }
 
 
 function hold(timestamp) { //game
+
+
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
 
@@ -271,13 +273,12 @@ function hold(timestamp) { //game
 
         if (!locallyUsedSquaresX.length) endGame()
 
+
         let locallyUsedSquares = {
             x: locallyUsedSquaresX,
             y: locallyUsedSquaresY,
             id: id,
         }
-
-
         fetch('http://localhost:8080/', {
                 method: 'POST',
                 'content-Type': 'application/json',
@@ -286,13 +287,16 @@ function hold(timestamp) { //game
             })
             .then(response => response.json())
             .then(json => {
-                delOtherPlayers(json.x[1], json.y[1])
-                drawOtherPlayers(json.x[1], json.y[1])
+
                 locallyUsedSquaresX = json.x;
                 locallyUsedSquaresY = json.y;
-                console.log(locallyUsedSquaresX)
             })
 
+
+
+
+        delOtherPlayers()
+        drawOtherPlayers(locallyUsedSquaresX.flat(4), locallyUsedSquaresY.flat(4))
 
         cx.fillStyle = 'white';
         //cx.fillRect(0, 0, cx.width, cx.height)
