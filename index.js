@@ -2,8 +2,6 @@ class player {
     constructor(x, y, keyboard, name) {
         this.x = x * scale;
         this.y = y * scale;
-        this.usedSnakeSpaceX = [0];
-        this.usedSnakeSpaceY = [0];
         this.ctr = -6;
         this.usedSnakeSpaceX = [];
         this.usedSnakeSpaceY = [];
@@ -44,7 +42,7 @@ class player {
 
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
-        
+
 
         //drawOtherPlayers(this.usedSnakeSpaceX, this.usedSnakeSpaceY)
 
@@ -114,7 +112,7 @@ class player {
             this.usedSnakeSpaceY.push(this.y)
 
 
-            for (let i = this.ctr; i < this.usedSnakeSpaceX.length; i++) {
+            for (let i = this.ctr; i <= this.usedSnakeSpaceX.length; i++) {
                 locallyUsedSquaresX.push(this.usedSnakeSpaceX[i])
                 locallyUsedSquaresY.push(this.usedSnakeSpaceY[i])
             }
@@ -201,6 +199,7 @@ cx.height = 500
 
 const scale = 20
 let speed = 1000
+let id = 1 //Math.floor(Math.random() * 1000);
 
 stillRunning = true;
 
@@ -244,18 +243,24 @@ function endGame() {
 
 
 function drawOtherPlayers(arrX, arrY) {
+    cx.fillStyle = 'gray';
     for (let i = 0; i < arrX.length; i++) {
-        cx.fillStyle = 'gray';
         cx.fillRect(arrX[i], arrY[i], scale, scale);
     }
+}
+
+function delOtherPlayers(arrX = [], arrY = []) {
     cx.fillStyle = 'white';
-    cx.fillRect(arrX[0], arrY[0], scale, scale);
+    for (let i = 0; i < arrX.length; i++) {
+        cx.fillRect(arrX[i], arrY[i], scale, scale);
+    }
 }
 
 
 function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
+
 
         for (let player of players) {
             player.move()
@@ -268,7 +273,8 @@ function hold(timestamp) { //game
 
         let locallyUsedSquares = {
             x: locallyUsedSquaresX,
-            y: locallyUsedSquaresY
+            y: locallyUsedSquaresY,
+            id: id,
         }
 
 
@@ -280,10 +286,11 @@ function hold(timestamp) { //game
             })
             .then(response => response.json())
             .then(json => {
-                console.log(json)
-                drawOtherPlayers(json.x, json.y)
+                delOtherPlayers(json.x[1], json.y[1])
+                drawOtherPlayers(json.x[1], json.y[1])
                 locallyUsedSquaresX = json.x;
                 locallyUsedSquaresY = json.y;
+                console.log(locallyUsedSquaresX)
             })
 
 
@@ -293,7 +300,7 @@ function hold(timestamp) { //game
         requestAnimationFrame(hold)
 
     } else if (stillRunning) {
-        
+
         requestAnimationFrame(hold)
     }
 

@@ -1,10 +1,27 @@
 const {
     createServer
 } = require('http')
-let allUsedSpaces = {
-    x: [],
-    y: [],
+
+
+class a {
+    constructor() {
+        this.x = [];
+        this.y = [];
+    }
+    pushSnake(id, arrX, arrY) {
+        this.x[id] = arrX;
+        this.y[id] = arrY;
+    }
+    getSnake() {
+        return JSON.stringify(this.x, this.y);
+    }
+    clearUsed() {
+        this.x = [];
+        this.y = [];
+    }
 }
+let allUsedSpaces = new a();
+
 let now = Date.now()
 
 const server = createServer();
@@ -22,8 +39,7 @@ server.on('request', (request, response) => {
 
     if (Date.now() - now >= 1000) {
         now = Date.now();
-        allUsedSpaces.x = [];
-        allUsedSpaces.y = [];
+        allUsedSpaces.clearUsed()
     }
 
 }).listen(8080);
@@ -36,9 +52,8 @@ function readStream(stream) {
         stream.on("data", chunk => data += chunk.toString());
         stream.on("end", () => {
             resolve(data);
-            allUsedSpaces.x = allUsedSpaces.x.concat(0, 0, JSON.parse(data).x);
-            allUsedSpaces.y = allUsedSpaces.y.concat(0, 0, JSON.parse(data).y);
-
+            allUsedSpaces.pushSnake(JSON.parse(data).id, JSON.parse(data).x, JSON.parse(data).y);
+            //console.log(allUsedSpaces)
         });
     });
 }
