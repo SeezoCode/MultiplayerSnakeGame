@@ -8,16 +8,17 @@ class a {
         this.x = [];
         this.y = [];
     }
-    pushSnake(arrX, arrY) {
-        this.x.push(arrX);
-        this.y.push(arrY);
+    pushSnake(arrX, arrY, id) {
+        this.x[id] = arrX;
+        this.y[id] = arrY;
+
     }
     getSnake() {
-        return JSON.stringify(this.x, this.y);
+        return JSON.stringify([this.x, this.y]);
     }
     clearUsed() {
-        this.x = [];
-        this.y = [];
+        this.x = [0];
+        this.y = [0];
     }
 }
 let allUsedSpaces = new a();
@@ -35,12 +36,13 @@ server.on('request', (request, response) => {
         'Access-Control-Allow-Origin': '*',
     });
 
-    response.end(JSON.stringify(allUsedSpaces))
+        console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
 
-    if (Date.now() - now > 1000) {
-        allUsedSpaces.clearUsed()
+    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
+
+    if (Date.now() - now > 300) {
+        //allUsedSpaces.clearUsed()
         now = Date.now()
-        console.log('here')
     }
 
 
@@ -54,7 +56,11 @@ function readStream(stream) {
         stream.on("data", chunk => data += chunk.toString());
         stream.on("end", () => {
             resolve(data);
-            allUsedSpaces.pushSnake(JSON.parse(data).x, JSON.parse(data).y);
+            data = JSON.parse(data)
+            data[0].shift()
+            data[1].shift()
+            allUsedSpaces.pushSnake(data[0], data[1], data[2]);
+            console.log(allUsedSpaces)
             //console.log(allUsedSpaces)
         });
     });

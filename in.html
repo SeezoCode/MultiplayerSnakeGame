@@ -4,7 +4,7 @@
   // The parameters we are gonna pass to the fetch function
   let fetchData = {
     method: 'POST',
-    body: 'Hifdsafsdafasdf',
+    body: JSON.stringify({x: 122223, y:321, id:1}),
     headers: new Headers(),
   }
 
@@ -16,3 +16,19 @@ fetch('http://localhost:8080/', fetchData)
   })
   
 </script>
+
+
+fetch('http://localhost:8080/', {
+                method: 'POST',
+                'content-Type': 'application/json',
+                body: JSON.stringify(locallyUsedSquares),
+                headers: new Headers(),
+            })
+            .then(response => response.json())
+            .then(json => {
+                json = JSON.parse(json)
+
+                locallyUsedSquaresX = json[0];
+                locallyUsedSquaresY = json[1];
+
+            })
