@@ -91,7 +91,8 @@ class player {
             if (this.x == randomX && this.y == randomY) {
                 this.ctr--;
                 this.snakeLength++
-                addCandy()
+                //addCandy()
+                discoveredCandy = true
                 this.text.innerHTML = `${this.name}, score: ${this.snakeLength + 1}`;
             }
 
@@ -164,7 +165,8 @@ cx.height = 500
 const scale = 20
 let speed = 300
 let numOfSnakes = 1
-
+let repeats = 0;
+let discoveredCandy = false
 
 stillRunning = true;
 
@@ -173,13 +175,12 @@ stillRunning = true;
 let usedSquaresX = [],
     usedSquaresY = [];
 
+let randomX = null, randomY = null;
 
 
 let players = [
     new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1'),
 ]
-
-addCandy();
 
 let now = Date.now()
 requestAnimationFrame(hold);
@@ -187,13 +188,13 @@ requestAnimationFrame(hold);
 
 
 function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.random() * cx.height)) { //game
+    
     cx.fillStyle = 'gold'
     randomX = x - x % scale
     randomY = y - y % scale
 
     if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
     else cx.fillRect(randomX, randomY, scale, scale);
-
 }
 
 function endGame() {
@@ -239,7 +240,14 @@ function drawOtherPlayers(arrX = [], arrY) {
 function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
-        requestAnimationFrame(hold)
+         
+        if (repeats == 30) {
+            cx.fillStyle = 'white';
+            cx.fillRect(0, 0, cx.width, cx.height)
+            repeats = 0;
+        }
+        repeats++;
+        
 
         for (let player of players) {
             player.move()
@@ -255,31 +263,28 @@ function hold(timestamp) { //game
         fetch('http://localhost:8080/', {
                 method: 'POST',
                 'content-Type': 'application/json',
-                body: JSON.stringify([usedSquaresX, usedSquaresY, id]),
+                body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy]),
                 headers: new Headers(),
             })
             .then(response => response.json())
             .then(json => {
-
-                if (numOfSnakes != json[0].length) {
-                    cx.fillStyle = 'white';
-                    cx.fillRect(0, 0, cx.width, cx.height)
-                };
-                numOfSnakes = json[0].length
 
                 for (let i = 0; i < json[0].length; i++) {
                     if (json[2] != id && json[0][i]) {
                         drawOtherPlayers(json[0][i], json[1][i])
                     }
                 }
+                addCandy(json[3][0], json[3][1])
 
             })
 
 
+        discoveredCandy = false
         usedSquaresX = [];
         usedSquaresY = [];
 
 
+        requestAnimationFrame(hold)
 
     } else if (stillRunning) {
         requestAnimationFrame(hold)

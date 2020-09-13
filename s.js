@@ -2,16 +2,18 @@ const {
     createServer
 } = require('http')
 
-let id
-let idList = []
+let id, repeats = 0;
+let randomX = null, randomY = null;
+let scale = 20;
 
+function addCandy(x = Math.floor(Math.random() * 500), y = Math.floor(Math.random() * 500)) { //game
 
-function makeId() {
+    randomX = x - x % scale
+    randomY = y - y % scale
 
-        idList.push(0)
-        id = 0
-    
+    if (allUsedSpaces.x.includes(randomX) && allUsedSpaces.y.includes(randomY)) addCandy()
 }
+
 
 class a {
     constructor() {
@@ -32,6 +34,7 @@ class a {
     }
 }
 let allUsedSpaces = new a();
+addCandy()
 
 let now = Date.now()
 
@@ -48,14 +51,14 @@ server.on('request', (request, response) => {
 
     //console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
 
-    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id]))
+    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY]]))
 
-    if (Date.now() - now > 300) {
-        //allUsedSpaces.clearUsed()
-        now = Date.now()
+    if (repeats == 80) {
+        allUsedSpaces.x = []
+        allUsedSpaces.y = []
+        repeats = 0
     }
-
-
+    repeats++;
 }).listen(8080);
 
 
@@ -68,9 +71,8 @@ function readStream(stream) {
             resolve(data);
             data = JSON.parse(data)
 
-            for (let i = -1; i <= data[2]; i++) {
-                //data[0].shift()
-                //data[1].shift()
+            if (data[3]) {
+                addCandy()
             }
 
             id = data[2]
@@ -81,4 +83,3 @@ function readStream(stream) {
         });
     });
 }
-
