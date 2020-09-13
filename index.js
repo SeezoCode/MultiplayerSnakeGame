@@ -1,5 +1,7 @@
+let id = Math.floor(Math.random() * 20)
+
 class player {
-    constructor(x, y, keyboard, color) {
+    constructor(x, y, keyboard, name) {
         this.x = x * scale;
         this.y = y * scale;
         this.tailX = [0];
@@ -28,6 +30,12 @@ class player {
 
         this.makeDisplay(this.x, this.y);
         this.events()
+
+        this.name = name;
+        let elem = document.createElement("p")
+        let text = document.createTextNode(`${this.name}, score: ${this.snakeLength + 1}`)
+        elem.appendChild(text)
+        this.text = document.body.appendChild(elem)
     }
 
 
@@ -84,18 +92,19 @@ class player {
                 this.ctr--;
                 this.snakeLength++
                 addCandy()
+                this.text.innerHTML = `${this.name}, score: ${this.snakeLength + 1}`;
             }
 
             if (this.lastUsed == this.kbd[0]) {
                 this.clearDebris(this.ctr)
                 if (this.y <= 0) {
-                    this.y = cx.height
+                    this.y = cx.height - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y -= scale)
             }
             if (this.lastUsed == this.kbd[1]) {
                 this.clearDebris(this.ctr)
-                if (this.y >= cx.height) {
+                if (this.y >= cx.height - scale) {
                     this.y = 0
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y += scale)
@@ -103,13 +112,13 @@ class player {
             if (this.lastUsed == this.kbd[2]) {
                 this.clearDebris(this.ctr)
                 if (this.x <= 0) {
-                    this.x = cx.width
+                    this.x = cx.width - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x -= scale, this.y)
             }
             if (this.lastUsed == this.kbd[3]) {
                 this.clearDebris(this.ctr)
-                if (this.x >= cx.width) {
+                if (this.x >= cx.width - scale) {
                     this.x = 0
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x += scale, this.y)
@@ -130,8 +139,6 @@ class player {
                     this.usedSnakeSpaceY = [];
 
                     stillRunning = true;
-
-
                 }
             }
         }
@@ -155,7 +162,9 @@ cx.width = 500
 cx.height = 500
 
 const scale = 20
-let speed = 1500
+let speed = 300
+let numOfSnakes = 1
+
 
 stillRunning = true;
 
@@ -167,7 +176,7 @@ let usedSquaresX = [],
 
 
 let players = [
-    new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'red'),
+    new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1'),
 ]
 
 addCandy();
@@ -202,6 +211,28 @@ function drawOtherPlayers(arrX = [], arrY) {
     for (let i = 0; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
     }
+
+    if (players[0].ctr > 12) {
+        for (let i = 0; i < arrX.length; i++) {
+            if (arrX[i] == players[0].x && arrY[i] == players[0].y) {
+                players[0].ctr += players[0].snakeLength - 1
+                players[0].snakeLength = 1
+                players[0].delSnake()
+
+                players[0].usedSnakeSpaceX = [];
+                players[0].usedSnakeSpaceY = [];
+
+                usedSquaresX = null;
+                usedSquaresY = null;
+
+                stillRunning = true;
+            }
+        }
+    }
+
+
+    cx.fillStyle = 'white';
+    cx.fillRect(arrX[0], arrY[0], scale, scale);
 }
 
 
@@ -221,25 +252,27 @@ function hold(timestamp) { //game
         usedSquaresX.shift()
         usedSquaresY.shift()
 
-        let pos
-
         fetch('http://localhost:8080/', {
                 method: 'POST',
                 'content-Type': 'application/json',
-                body: JSON.stringify([usedSquaresX, usedSquaresY, 1]),
+                body: JSON.stringify([usedSquaresX, usedSquaresY, id]),
                 headers: new Headers(),
             })
             .then(response => response.json())
             .then(json => {
 
+                if (numOfSnakes != json[0].length) {
+                    cx.fillStyle = 'white';
+                    cx.fillRect(0, 0, cx.width, cx.height)
+                };
+                numOfSnakes = json[0].length
 
+                for (let i = 0; i < json[0].length; i++) {
+                    if (json[2] != id && json[0][i]) {
+                        drawOtherPlayers(json[0][i], json[1][i])
+                    }
+                }
 
-                console.log(json[1][1])
-
-                usedSquaresX = json[0];
-                usedSquaresY = json[1];
-
-                drawOtherPlayers(json[0][1], json[1][1])
             })
 
 

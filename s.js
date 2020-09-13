@@ -2,6 +2,16 @@ const {
     createServer
 } = require('http')
 
+let id
+let idList = []
+
+
+function makeId() {
+
+        idList.push(0)
+        id = 0
+    
+}
 
 class a {
     constructor() {
@@ -36,9 +46,9 @@ server.on('request', (request, response) => {
         'Access-Control-Allow-Origin': '*',
     });
 
-        console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
+    //console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
 
-    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
+    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id]))
 
     if (Date.now() - now > 300) {
         //allUsedSpaces.clearUsed()
@@ -57,13 +67,18 @@ function readStream(stream) {
         stream.on("end", () => {
             resolve(data);
             data = JSON.parse(data)
-            data[0].shift()
-            data[1].shift()
+
+            for (let i = -1; i <= data[2]; i++) {
+                //data[0].shift()
+                //data[1].shift()
+            }
+
+            id = data[2]
+
             allUsedSpaces.pushSnake(data[0], data[1], data[2]);
-            console.log(allUsedSpaces)
+
             //console.log(allUsedSpaces)
         });
     });
 }
-
 
