@@ -1,4 +1,5 @@
 let id = Math.floor(Math.random() * 20)
+let url = 'http://localhost:8080/'
 
 class player {
     constructor(x, y, keyboard, name) {
@@ -97,28 +98,24 @@ class player {
             }
 
             if (this.lastUsed == this.kbd[0]) {
-                this.clearDebris(this.ctr)
                 if (this.y <= 0) {
                     this.y = cx.height - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y -= scale)
             }
             if (this.lastUsed == this.kbd[1]) {
-                this.clearDebris(this.ctr)
                 if (this.y >= cx.height - scale) {
                     this.y = 0
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x, this.y += scale)
             }
             if (this.lastUsed == this.kbd[2]) {
-                this.clearDebris(this.ctr)
                 if (this.x <= 0) {
                     this.x = cx.width - scale
                     this.makeDisplay(this.x, this.y)
                 } else this.makeDisplay(this.x -= scale, this.y)
             }
             if (this.lastUsed == this.kbd[3]) {
-                this.clearDebris(this.ctr)
                 if (this.x >= cx.width - scale) {
                     this.x = 0
                     this.makeDisplay(this.x, this.y)
@@ -156,6 +153,9 @@ class player {
 }
 
 
+
+
+
 //needed to run the game
 
 let cx = document.querySelector('canvas').getContext('2d');
@@ -174,8 +174,10 @@ stillRunning = true;
 
 let usedSquaresX = [],
     usedSquaresY = [];
+let serverPlayersX = [], serverPlayersY = [];
 
-let randomX = null, randomY = null;
+let randomX = null,
+    randomY = null;
 
 
 let players = [
@@ -188,7 +190,7 @@ requestAnimationFrame(hold);
 
 
 function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.random() * cx.height)) { //game
-    
+
     cx.fillStyle = 'gold'
     randomX = x - x % scale
     randomY = y - y % scale
@@ -207,7 +209,25 @@ function endGame() {
     cx.fillText("GAME LOST", cx.width / 2, cx.height / 2);
 }
 
+
+function undrawOtherPlayers() {
+    cx.fillStyle = 'white'
+    for (let i = 0; i <= serverPlayersX; i++) {
+        cx.fillRect(serverPlayersX[i], serverPlayersY[i], scale, scale);
+    }
+    serverPlayersX = [];
+    serverPlayersY = [];
+}
+
 function drawOtherPlayers(arrX = [], arrY) {
+    
+    if (repeats == 150) {
+        cx.fillStyle = 'white';
+        cx.fillRect(0, 0, cx.width, cx.height)
+        repeats = 0;
+    } 
+    repeats++; 
+    undrawOtherPlayers()
     cx.fillStyle = 'gray';
     for (let i = 0; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
@@ -231,23 +251,17 @@ function drawOtherPlayers(arrX = [], arrY) {
         }
     }
 
-
     cx.fillStyle = 'white';
     cx.fillRect(arrX[0], arrY[0], scale, scale);
+    cx.fillRect(arrX[1], arrY[1], scale, scale);
 }
 
 
 function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
-         
-        if (repeats == 30) {
-            cx.fillStyle = 'white';
-            cx.fillRect(0, 0, cx.width, cx.height)
-            repeats = 0;
-        }
-        repeats++;
-        
+
+
 
         for (let player of players) {
             player.move()
@@ -257,10 +271,8 @@ function hold(timestamp) { //game
         }
 
         if (!usedSquaresX.length) endGame()
-        usedSquaresX.shift()
-        usedSquaresY.shift()
 
-        fetch('http://localhost:8080/', {
+        fetch(url, {
                 method: 'POST',
                 'content-Type': 'application/json',
                 body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy]),
@@ -273,6 +285,11 @@ function hold(timestamp) { //game
                     if (json[2] != id && json[0][i]) {
                         drawOtherPlayers(json[0][i], json[1][i])
                     }
+                }
+
+                for (let i = 0; i < json[0].length; i++) {
+                    serverPlayersX.push(json[0][i])
+                    serverPlayersY.push(json[1][i])
                 }
                 addCandy(json[3][0], json[3][1])
 

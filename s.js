@@ -53,7 +53,7 @@ server.on('request', (request, response) => {
 
     response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY]]))
 
-    if (repeats == 80) {
+    if (repeats == 30) {
         allUsedSpaces.x = []
         allUsedSpaces.y = []
         repeats = 0
