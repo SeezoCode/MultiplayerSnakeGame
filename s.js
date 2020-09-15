@@ -1,6 +1,50 @@
 const {
     createServer
 } = require('http')
+const {
+    readFileSync
+} = require("fs");
+
+let script = readFileSync('index.js', 'utf8')
+
+const { networkInterfaces } = require('os');
+
+const nets = networkInterfaces();
+const results = Object.create(null); // or just '{}', an empty object
+
+for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+        // skip over non-ipv4 and internal (i.e. 127.0.0.1) addresses
+        if (net.family === 'IPv4' && !net.internal) {
+            if (!results[name]) {
+                results[name] = [];
+            }
+
+            results[name].push(net.address);
+        }
+    }
+}
+console.log(results)
+
+let file = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Snake Game</title>
+    
+    
+    <style>
+    </style>
+</head>
+<body style="font-family:arial">
+    <h1>Snake Game</h1>
+
+    <canvas height="500" width="500" style="border: 1px solid black"></canvas>
+    <script>${script}</script>
+</body>
+</html>`
+
 
 let id, repeats = 0;
 let randomX = null, randomY = null;
@@ -40,6 +84,16 @@ let now = Date.now()
 
 const server = createServer();
 server.on('request', (request, response) => {
+    if (request.method === 'GET') {
+        response.writeHead(200, {
+        'Content-Type': 'text/html'
+    });
+    response.on('error', () => console.log("here"))
+    //response.on('end', () => console.log('finish'))
+    response.write(file)
+    response.end()
+    console.log("A new connection at:", request.connection.remoteAddress)
+    }
 
     if (request.method === 'POST') {
         readStream(request)
@@ -53,7 +107,7 @@ server.on('request', (request, response) => {
 
     response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY]]))
 
-    if (repeats == 30) {
+    if (repeats == 20) {
         allUsedSpaces.x = []
         allUsedSpaces.y = []
         repeats = 0

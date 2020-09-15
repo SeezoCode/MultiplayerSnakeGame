@@ -1,12 +1,12 @@
 let id = Math.floor(Math.random() * 20)
-let url = 'http://localhost:8080/'
+let url = 'http://192.168.1.135:8080/'
 
 class player {
     constructor(x, y, keyboard, name) {
         this.x = x * scale;
         this.y = y * scale;
-        this.tailX = [0];
-        this.tailY = [0];
+        this.tailX = [];
+        this.tailY = [];
         this.ctr = -6;
         this.usedSnakeSpaceX = [];
         this.usedSnakeSpaceY = [];
@@ -41,13 +41,8 @@ class player {
 
 
     makeDisplay(x, y) {
-
-        cx.fillStyle = 'black';
-        cx.strokeRect(0, 0, cx.width, cx.height);
-
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
-
     }
 
 
@@ -63,6 +58,35 @@ class player {
             if (event.key == 'Enter') {
                 this.go = true
             }
+        })
+
+        document.body.addEventListener("touchstart", event => {
+            let directionX = event.changedTouches['0'].clientX,
+                directionY = event.changedTouches['0'].clientY;
+
+            // if (!this.go) this.go = true;
+
+
+            document.body.addEventListener("touchmove", event => {
+
+                if (directionX - event.changedTouches['0'].clientX > 50 && this.lastUsed != this.kbd[3]) {
+                    console.log('left'), directionX = event.changedTouches['0'].clientX;
+                    this.lastUsedIndex = this.kbd[2]
+                }
+                if (directionX - event.changedTouches['0'].clientX < -50 && this.lastUsed != this.kbd[2]) {
+                    console.log('right'), directionX = event.changedTouches['0'].clientX;
+                    this.lastUsedIndex = this.kbd[3]
+                }
+                if (directionY - event.changedTouches['0'].clientY > 50 && this.lastUsed != this.kbd[1]) {
+                    console.log('up'), directionY = event.changedTouches['0'].clientY;
+                    this.lastUsedIndex = this.kbd[0]
+                }
+                if (directionY - event.changedTouches['0'].clientY < -50 && this.lastUsed != this.kbd[0]) {
+                    console.log('down'), directionY = event.changedTouches['0'].clientY;
+                    this.lastUsedIndex = this.kbd[1]
+                }
+                document.body.removeEventListener('touchmove', event)
+            })
         })
     }
 
@@ -174,14 +198,17 @@ stillRunning = true;
 
 let usedSquaresX = [],
     usedSquaresY = [];
-let serverPlayersX = [], serverPlayersY = [];
+let serverPlayersX = [],
+    serverPlayersY = [];
 
 let randomX = null,
     randomY = null;
 
+let playerCount = [1, 1]
+
 
 let players = [
-    new player(10, 10, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1'),
+    new player(4, 4, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1'),
 ]
 
 let now = Date.now()
@@ -219,20 +246,14 @@ function undrawOtherPlayers() {
     serverPlayersY = [];
 }
 
+
+
 function drawOtherPlayers(arrX = [], arrY) {
-    
-    if (repeats == 150) {
-        cx.fillStyle = 'white';
-        cx.fillRect(0, 0, cx.width, cx.height)
-        repeats = 0;
-    } 
-    repeats++; 
     undrawOtherPlayers()
     cx.fillStyle = 'gray';
     for (let i = 0; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
     }
-
     if (players[0].ctr > 12) {
         for (let i = 0; i < arrX.length; i++) {
             if (arrX[i] == players[0].x && arrY[i] == players[0].y) {
@@ -250,11 +271,11 @@ function drawOtherPlayers(arrX = [], arrY) {
             }
         }
     }
-
     cx.fillStyle = 'white';
     cx.fillRect(arrX[0], arrY[0], scale, scale);
     cx.fillRect(arrX[1], arrY[1], scale, scale);
 }
+
 
 
 function hold(timestamp) { //game
@@ -282,7 +303,8 @@ function hold(timestamp) { //game
             .then(json => {
 
                 for (let i = 0; i < json[0].length; i++) {
-                    if (json[2] != id && json[0][i]) {
+                    if (json[0][i]) {
+                        playerCount[0]++
                         drawOtherPlayers(json[0][i], json[1][i])
                     }
                 }
@@ -295,11 +317,24 @@ function hold(timestamp) { //game
 
             })
 
+        if (playerCount[1] != playerCount[0]) {
+            if (repeats > 12) {
+                cx.fillStyle = 'white';
+                cx.fillRect(0, 0, cx.width, cx.height)
+                repeats = 0
+        console.log('here')
+                playerCount[1] = playerCount[0]
+
+            }
+            repeats++;
+
+        }
+        console.log(playerCount[0])
 
         discoveredCandy = false
         usedSquaresX = [];
         usedSquaresY = [];
-
+        playerCount[0] = 0;
 
         requestAnimationFrame(hold)
 
