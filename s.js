@@ -5,9 +5,13 @@ const {
     readFileSync
 } = require("fs");
 
+let print = console.log
+
 let script = readFileSync('index.js', 'utf8')
 
-const { networkInterfaces } = require('os');
+const {
+    networkInterfaces
+} = require('os');
 
 const nets = networkInterfaces();
 const results = Object.create(null); // or just '{}', an empty object
@@ -47,8 +51,10 @@ let file = `<!DOCTYPE html>
 
 
 let id, repeats = 0;
-let randomX = null, randomY = null;
+let randomX = null,
+    randomY = null;
 let scale = 20;
+let playerCount = 0
 
 function addCandy(x = Math.floor(Math.random() * 500), y = Math.floor(Math.random() * 500)) { //game
 
@@ -59,6 +65,22 @@ function addCandy(x = Math.floor(Math.random() * 500), y = Math.floor(Math.rando
 }
 
 
+function countPlayers(arr) {
+    let players
+    for (let elem of arr) {
+        if (elem != null) {
+            players++;
+        }
+    }
+
+    print(playerCount, players)
+    if (players != playerCount) {
+        playerCount = players;
+        return true
+    }
+    return false
+}
+
 class a {
     constructor() {
         this.x = [];
@@ -67,32 +89,29 @@ class a {
     pushSnake(arrX, arrY, id) {
         this.x[id] = arrX;
         this.y[id] = arrY;
-
     }
     getSnake() {
         return JSON.stringify([this.x, this.y]);
     }
     clearUsed() {
-        this.x = [0];
-        this.y = [0];
+        this.x = [];
+        this.y = [];
     }
 }
 let allUsedSpaces = new a();
 addCandy()
 
-let now = Date.now()
-
 const server = createServer();
 server.on('request', (request, response) => {
     if (request.method === 'GET') {
         response.writeHead(200, {
-        'Content-Type': 'text/html'
-    });
-    response.on('error', () => console.log("here"))
-    //response.on('end', () => console.log('finish'))
-    response.write(file)
-    response.end()
-    console.log("A new connection at:", request.connection.remoteAddress)
+            'Content-Type': 'text/html'
+        });
+        response.on('error', () => console.log("here"))
+        //response.on('end', () => console.log('finish'))
+        response.write(file)
+        response.end()
+        console.log("A new connection at:", request.connection.remoteAddress)
     }
 
     if (request.method === 'POST') {
@@ -105,14 +124,15 @@ server.on('request', (request, response) => {
 
     //console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
 
-    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY]]))
+    response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY], Date.now()]))
 
-    if (repeats == 20) {
+    if (repeats == 100) {
         allUsedSpaces.x = []
         allUsedSpaces.y = []
         repeats = 0
     }
     repeats++;
+    //print("new connection")
 }).listen(8080);
 
 
@@ -127,6 +147,12 @@ function readStream(stream) {
 
             if (data[3]) {
                 addCandy()
+            }
+
+            if (!data[0]) {
+                allUsedSpaces.x = []
+                allUsedSpaces.y = []
+                print('reset')
             }
 
             id = data[2]

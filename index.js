@@ -98,6 +98,13 @@ class player {
 
 
     move() { //player
+        if (roundsToReset > 30) {
+            cx.fillStyle = 'white'
+            cx.fillRect(0, 0, cx.width, cx.height)
+            roundsToReset = 0
+        }
+        roundsToReset++;
+
         if (this.go) {
             this.lastUsed = this.lastUsedIndex
             this.ctr++
@@ -191,8 +198,14 @@ let speed = 300
 let numOfSnakes = 1
 let repeats = 0;
 let discoveredCandy = false
+let fetched = false;
+let stillRunning = true;
+let roundsToReset = 0;
 
-stillRunning = true;
+let elem = document.createElement("p")
+let text = document.createTextNode(`ping: `)
+elem.appendChild(text)
+text = document.body.appendChild(elem)
 
 //required from server
 
@@ -212,6 +225,7 @@ let players = [
 ]
 
 let now = Date.now()
+let now2 = Date.now()
 requestAnimationFrame(hold);
 
 
@@ -237,10 +251,16 @@ function endGame() {
 }
 
 
-function undrawOtherPlayers() {
+
+function undrawOtherPlayers(arrX, arrY) {
     cx.fillStyle = 'white'
-    for (let i = 0; i <= serverPlayersX; i++) {
-        cx.fillRect(serverPlayersX[i], serverPlayersY[i], scale, scale);
+
+    for (let i = 0; i < arrX.length; i++) {
+        //needs to loop one more time
+        for (let j = 0; j < arrX.length; j++) {
+            cx.fillRect(arrX[i][j], arrY[i][j], scale, scale);
+            //console.log(111, arrX);
+        }
     }
     serverPlayersX = [];
     serverPlayersY = [];
@@ -249,7 +269,6 @@ function undrawOtherPlayers() {
 
 
 function drawOtherPlayers(arrX = [], arrY) {
-    undrawOtherPlayers()
     cx.fillStyle = 'gray';
     for (let i = 0; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
@@ -271,9 +290,56 @@ function drawOtherPlayers(arrX = [], arrY) {
             }
         }
     }
-    cx.fillStyle = 'white';
-    cx.fillRect(arrX[0], arrY[0], scale, scale);
-    cx.fillRect(arrX[1], arrY[1], scale, scale);
+    //cx.fillStyle = 'white';
+    //cx.fillRect(arrX[0], arrY[0], scale, scale);
+    //cx.fillRect(arrX[1], arrY[1], scale, scale);
+}
+
+
+function fetchOK() {
+    fetched = false;
+    fetch(url, {
+            method: 'POST',
+            'content-Type': 'application/json',
+            body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy]),
+            headers: new Headers(),
+        })
+        .then(response => response.json())
+        .then(json => {            //console.log(json)
+            for (let i = 0; i < json[0].length; i++) {
+                if (json[0][i]) {
+                    undrawOtherPlayers(serverPlayersX, serverPlayersY)
+                    drawOtherPlayers(json[0][i], json[1][i])
+                }
+            }
+
+            for (let i = json[0].length; i >= 0; i--) {
+                if (json[0][i] != null && json[0][i].length > 1) {
+                    serverPlayersX.push(json[0][i]);
+                    serverPlayersY.push(json[1][i]);
+                    //console.log(serverPlayersX);
+                }
+            }
+
+            addCandy(json[3][0], json[3][1])
+            text.innerHTML = `ping: ${Date.now() - json[4]}`
+        })
+
+    fetched = true
+}
+
+
+function checkAmmounthOfPlayers() {
+    if (playerCount[1] != playerCount[0]) {
+        if (repeats > 2) {
+            cx.fillStyle = 'white';
+            cx.fillRect(0, 0, cx.width, cx.height)
+            playerCount[1] = playerCount[0]
+            repeats = 0
+        } else repeats = 0;
+        repeats++;
+
+    }
 }
 
 
@@ -281,8 +347,6 @@ function drawOtherPlayers(arrX = [], arrY) {
 function hold(timestamp) { //game
     if (Date.now() - now >= speed && stillRunning) {
         now = Date.now()
-
-
 
         for (let player of players) {
             player.move()
@@ -293,53 +357,25 @@ function hold(timestamp) { //game
 
         if (!usedSquaresX.length) endGame()
 
-        fetch(url, {
-                method: 'POST',
-                'content-Type': 'application/json',
-                body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy]),
-                headers: new Headers(),
-            })
-            .then(response => response.json())
-            .then(json => {
+        fetchOK()
+        //checkAmmounthOfPlayers()
 
-                for (let i = 0; i < json[0].length; i++) {
-                    if (json[0][i]) {
-                        playerCount[0]++
-                        drawOtherPlayers(json[0][i], json[1][i])
-                    }
-                }
-
-                for (let i = 0; i < json[0].length; i++) {
-                    serverPlayersX.push(json[0][i])
-                    serverPlayersY.push(json[1][i])
-                }
-                addCandy(json[3][0], json[3][1])
-
-            })
-
-        if (playerCount[1] != playerCount[0]) {
-            if (repeats > 12) {
-                cx.fillStyle = 'white';
-                cx.fillRect(0, 0, cx.width, cx.height)
-                repeats = 0
-        console.log('here')
-                playerCount[1] = playerCount[0]
-
-            }
-            repeats++;
-
-        }
         console.log(playerCount[0])
 
         discoveredCandy = false
         usedSquaresX = [];
         usedSquaresY = [];
-        playerCount[0] = 0;
+        //playerCount[0] = 0;
 
         requestAnimationFrame(hold)
 
     } else if (stillRunning) {
+        if (Date.now() - now2 >= speed/2 && false) {
+            fetchOK()
+            now2 = Date.now()
+        }
         requestAnimationFrame(hold)
     }
-
 }
+
+// undrawOtherPlayers seemingly does nothing
