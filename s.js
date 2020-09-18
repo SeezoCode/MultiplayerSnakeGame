@@ -8,6 +8,7 @@ const {
 let print = console.log
 
 let script = readFileSync('index.js', 'utf8')
+let htmlFile = readFileSync('index.html', 'utf8')
 
 const {
     networkInterfaces
@@ -30,24 +31,9 @@ for (const name of Object.keys(nets)) {
 }
 console.log(results)
 
-let file = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Snake Game</title>
-    
-    
-    <style>
-    </style>
-</head>
-<body style="font-family:arial">
-    <h1>Snake Game</h1>
-
-    <canvas height="500" width="500" style="border: 1px solid black"></canvas>
-    <script>${script}</script>
-</body>
-</html>`
+let file = `
+    ${htmlFile}
+    <script>${script}</script>`
 
 
 let id, repeats = 0;
@@ -55,6 +41,7 @@ let randomX = null,
     randomY = null;
 let scale = 20;
 let playerCount = 0
+let width = 500, height = 500;
 
 function addCandy(x = Math.floor(Math.random() * 500), y = Math.floor(Math.random() * 500)) { //game
 
@@ -97,6 +84,29 @@ class a {
         this.x = [];
         this.y = [];
     }
+    makeWalls() {
+        this.clearUsed();
+        this.x[0] = [];
+        this.y[0] = [];
+
+        let firstDim = Math.floor(Math.random() * width);
+        firstDim -= firstDim % scale
+        let secondDim = Math.floor(Math.random() * 30 * scale)
+        let pos = Math.floor(Math.random() * 30 * scale)
+
+        if (Math.random() > .95) { // for x
+            for (let i = secondDim - secondDim % scale; i >= pos; i -= scale) {
+                this.x[0].push(i)
+                this.y[0].push(firstDim)
+            }
+        }
+        if (Math.random() < .05) { // for x
+            for (let i = secondDim - secondDim % scale; i >= pos; i -= scale) {
+                this.x.push(firstDim)
+                this.y.push(i)
+            }
+        }
+    }
 }
 let allUsedSpaces = new a();
 addCandy()
@@ -126,9 +136,9 @@ server.on('request', (request, response) => {
 
     response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id, [randomX, randomY], Date.now()]))
 
-    if (repeats == 100) {
-        allUsedSpaces.x = []
-        allUsedSpaces.y = []
+    if (repeats == 50) {
+        allUsedSpaces.makeWalls()
+        print(allUsedSpaces)
         repeats = 0
     }
     repeats++;
