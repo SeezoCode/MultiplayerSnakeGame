@@ -1,4 +1,4 @@
-let id = Math.floor(Math.random() * 20)
+let id = Math.floor(Math.random() * 20) + 1
 let url = 'http://192.168.1.135:8080/'
 
 class player {
@@ -18,17 +18,6 @@ class player {
         this.lastUsed = "";
         this.lastUsedIndex = ""
 
-        this.shift = addEventListener("keydown", event => {
-            console.log(event.key)
-            if (this.shift && event.key == 'Shift') {
-                this.shift = !this.shift;
-                speed = speed * 2
-            } else if (event.key == 'Shift') {
-                this.shift = !this.shift;
-                speed = speed / 2
-            }
-        })
-
         this.makeDisplay(this.x, this.y);
         this.events()
 
@@ -37,12 +26,58 @@ class player {
         let text = document.createTextNode(`${this.name}, score: ${this.snakeLength + 1}`)
         elem.appendChild(text)
         this.text = document.body.appendChild(elem)
+
+        let elem2 = document.createElement("p")
+        let showableSpeed = document.createTextNode(`speed: ${speed}`)
+        elem2.appendChild(showableSpeed)
+        this.showableSpeed = document.body.appendChild(elem2)
+
+        //this.changeSpeedLimited()
+        this.changeSpeed()
     }
 
 
     makeDisplay(x, y) {
         cx.fillStyle = this.color;
         cx.fillRect(x, y, scale, scale);
+    }
+
+
+    changeSpeedLimited() {
+        this.shift = addEventListener("keydown", event => {
+            console.log(event.key)
+            if (this.shift && event.key == 'Shift') {
+                this.shift = !this.shift;
+                speed = speed * 2
+                this.showableSpeed.innerHTML = `speed: ${speed}`
+            } else if (event.key == 'Shift') {
+                this.shift = !this.shift;
+                speed = speed / 2
+                this.showableSpeed.innerHTML = `speed: ${speed}`
+            }
+        })
+    }
+
+    changeSpeed() {
+        addEventListener("keydown", event => {
+            console.log(event.key)
+            if (event.key == 'Control') { // this.shift && 
+                //this.shift = !this.shift;
+                speed += 30
+
+                if (speed > 600) {
+                    speed = 600;
+                }
+                this.showableSpeed.innerHTML = `speed: ${speed}`
+            } else if (event.key == 'Shift') {
+                //this.shift = !this.shift;
+                speed -= 50
+                if (speed < 50) {
+                    speed = 50
+                }
+                this.showableSpeed.innerHTML = `speed: ${speed}`
+            }
+        })
     }
 
 
@@ -112,7 +147,7 @@ class player {
             this.tailY.push(this.y)
 
 
-            for (let i = this.ctr; i < this.tailX.length; i++) {
+            for (let i = this.ctr; i <= this.tailX.length; i++) {
                 usedSquaresX.push(this.tailX[i])
                 usedSquaresY.push(this.tailY[i])
 
@@ -190,10 +225,10 @@ class player {
 //needed to run the game
 
 let cx = document.querySelector('canvas').getContext('2d');
-cx.width = 500
-cx.height = 500
-
 const scale = 20
+cx.width = 20 * 25
+cx.height = 20 * 25
+
 let speed = 300
 let numOfSnakes = 1
 let repeats = 0;
@@ -221,7 +256,7 @@ let playerCount = [1, 1]
 
 
 let players = [
-    new player(4, 4, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'Player1'),
+    new player(4, 4, ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], 'You'),
 ]
 
 let now = Date.now()
@@ -236,8 +271,11 @@ function addCandy(x = Math.floor(Math.random() * cx.width), y = Math.floor(Math.
     randomX = x - x % scale
     randomY = y - y % scale
 
-    if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
-    else cx.fillRect(randomX, randomY, scale, scale);
+    try {
+        if (usedSquaresX.includes(randomX) && usedSquaresY.includes(randomY)) addCandy()
+        else cx.fillRect(randomX, randomY, scale, scale);
+    }
+    catch (err) {endGame()}
 }
 
 function endGame() {
@@ -305,7 +343,7 @@ function fetchOK() {
             headers: new Headers(),
         })
         .then(response => response.json())
-        .then(json => {            //console.log(json)
+        .then(json => { //console.log(json)
             for (let i = 0; i < json[0].length; i++) {
                 if (json[0][i]) {
                     undrawOtherPlayers(serverPlayersX, serverPlayersY)
@@ -370,7 +408,7 @@ function hold(timestamp) { //game
         requestAnimationFrame(hold)
 
     } else if (stillRunning) {
-        if (Date.now() - now2 >= speed/2 && false) {
+        if (Date.now() - now2 >= speed / 2 && false) {
             fetchOK()
             now2 = Date.now()
         }
