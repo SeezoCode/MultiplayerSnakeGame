@@ -1,0 +1,8 @@
+{
+  "name": "MultiplayerSnakeGame",
+  "version": "1.0.0",
+  "dependencies": {},
+  "devDependencies": {
+    "pathfinding": "^0.4.18"
+  }
+}
