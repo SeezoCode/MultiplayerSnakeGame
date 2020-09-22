@@ -1,3 +1,14 @@
+// settings:
+
+let playWithBots = 2            // enter number of bots
+let width = 800, height = 500;  // in px
+let scale = 20;                 // in px
+let speed = 250;                // in ms
+let numberOfMaxPlayers = 5      // to save time, this feature is clunky and sometimes a duplicate ID may occur.
+                                // The solution is to reload the page or increase the number
+
+
+
 const {
     createServer
 } = require('http')
@@ -34,19 +45,26 @@ for (const name of Object.keys(nets)) {
         }
     }
 }
-console.log(results)
+console.log(`http://${results[Object.keys(results)[0]][0]}:8000`)
 
 let file = `
     ${htmlFile}
-    <script>${script}</script>`
+    <script>
+    let id = Math.floor(Math.random() * ${numberOfMaxPlayers} * 8) + 1
+    let url = "http://${results[Object.keys(results)[0]][0]}:8000"
+    let cx = document.querySelector('canvas').getContext('2d');
+    const scale = ${scale}
+    cx.width = ${width}
+    cx.height = ${height}
+    let speed = ${speed}
+    ${script}</script> `
 
 
 let id, repeats = 0;
 let randomX = null,
     randomY = null;
-let scale = 20;
 let playerCount = 0
-let width = 500, height = 500;
+let nowBot = Date.now()
 
 function addCandy(x = Math.floor(Math.random() * width),
                   y = Math.floor(Math.random() * height)) {
@@ -82,10 +100,12 @@ class a {
     constructor() {
         this.x = [];
         this.y = [];
+        this.color = []
     }
-    pushSnake(arrX, arrY, id) {
+    pushSnake(arrX, arrY, id, color) {
         this.x[id] = arrX;
         this.y[id] = arrY;
+        this.color[id] = color
     }
     getSnake() {
         return JSON.stringify([this.x, this.y]);
@@ -123,14 +143,13 @@ class botClass {
     constructor(x, y) {
         this.x = x
         this.y = y
-        this.grid = new PF.Grid(25, 25)
         this.length = 4
-        this.usedSpaceX = [0 + x, 20 + x, 40 + x, 60 + x]
+        this.usedSpaceX = [0 + x, scale + x, 2 * scale + x, 3 * scale + x]
         this.usedSpaceY = [0 + y, 0 + y, 0 + y, 0 + y]
         this.path = []
         this.prolong = false
-        this.reviveChance = 0
-        for (let i = 20; i < 40; i++) {
+        this.color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`;
+        for (let i = 20; i < 60; i++) {
             if (!usedIDs.includes(i)) {
                 this.id = i
                 usedIDs.push(i)
@@ -152,7 +171,7 @@ class botClass {
         //print(currX, currY)
 
         //print(this.usedSpaceX, this.usedSpaceY)
-        allUsedSpaces.pushSnake(this.usedSpaceX, this.usedSpaceY, this.id)
+        allUsedSpaces.pushSnake(this.usedSpaceX, this.usedSpaceY, this.id, this.color)
 
     }
 
@@ -182,7 +201,7 @@ class botClass {
     }
 
     createMatrix() {
-        this.grid = new PF.Grid(25, 25)
+        this.grid = new PF.Grid(width / scale, height / scale)
         /*
         for (let i = this.usedSpaceX.length - 1; i >= 0; i--) {
             this.grid.setWalkableAt(this.usedSpaceX[i] / scale, this.usedSpaceY[i] / scale, false)
@@ -192,7 +211,13 @@ class botClass {
         for (let i = allUsedSpaces.x.length - 1; i >= 0; i--) {
             if (allUsedSpaces.x[i] != null) {
                 for (let j = allUsedSpaces.x[i].length - 1; j >= 0; j--) {
-                    this.grid.setWalkableAt(allUsedSpaces.x[i][j] / scale, allUsedSpaces.y[i][j] / scale, false)
+                    if (allUsedSpaces.x[i][j] != null) {
+                        try {
+                            this.grid.setWalkableAt(allUsedSpaces.x[i][j] / scale, allUsedSpaces.y[i][j] / scale, false)
+                        }
+                        catch (e) {}
+
+                    }
                     //print(allUsedSpaces.x[i])
                 }
             }
@@ -212,11 +237,16 @@ class botClass {
     }
 
     revive() {
-        if (this.usedSpaceX.length > 50) print('Died, score: ', this.usedSpaceX.length)
+        if (this.usedSpaceX.length > 0) print('Died, score: ', this.usedSpaceX.length)
+
+        let x = Math.floor(Math.random() * width)
+        x = x - x % scale
+        let y = Math.floor(Math.random() * height)
+        y = y - y % scale
 
         allUsedSpaces.clearUsed()
-        this.usedSpaceX = [0 + this.x, 20 + this.x, 40 + this.x, 60 + this.x]
-        this.usedSpaceY = [0 + this.y, 0 + this.y, 0 + this.y, 0 + this.y]
+        this.usedSpaceX = [x, x + scale]
+        this.usedSpaceY = [y, y + scale]
 
 
 
@@ -227,7 +257,7 @@ class botClass {
         for (let i = allUsedSpaces.x.length - 1; i >= 0; i--) {
             if (allUsedSpaces.x[i] != null) {
                 for (let j = allUsedSpaces.x[i].length - 1; j >= 0; j--) {
-                    if (allUsedSpaces.x[i][j] == tileX && allUsedSpaces.y[i][j] == tileY) {
+                    if (allUsedSpaces.x[i][j] === tileX && allUsedSpaces.y[i][j] === tileY) {
                         this.revive()
                         print('collision')
                     }
@@ -238,22 +268,31 @@ class botClass {
 }
 
 let allUsedSpaces = new a();
+let bots = []
 
-let bots = [
-    new botClass(300, 300),
-    new botClass(200, 200),
-    new botClass(100, 100),
-]
+for (let i = playWithBots; i > 0; i--) {
+    let x = Math.floor(Math.random() * width)
+    x = x - x % scale
+    let y = Math.floor(Math.random() * height)
+    y = y - y % scale
+    bots.push(new botClass(x, y))
+}
+
+
 addCandy()
 
 const server = createServer();
 server.on('request', (request, response) => {
 
-    for (bot of bots) {
-        try { bot.move() }
-        catch (e) {
-            bot.revive();
-            print('revival')
+    if (Date.now() - nowBot >= speed - 10) {
+        nowBot = Date.now()
+        for (bot of bots) {
+            try {
+                bot.move()
+            } catch (e) {
+                bot.revive();
+                //print(e)
+            }
         }
     }
 
@@ -279,7 +318,7 @@ server.on('request', (request, response) => {
     //console.log(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y]))
 
     response.end(JSON.stringify([allUsedSpaces.x, allUsedSpaces.y, id,
-                    [randomX, randomY], Date.now()]))
+                    [randomX, randomY], Date.now(), allUsedSpaces.color]))
 
     if (repeats === 50) {
         //allUsedSpaces.makeWalls()
@@ -288,7 +327,7 @@ server.on('request', (request, response) => {
     }
     repeats++;
     //print("new connection")
-}).listen(8080);
+}).listen(8000);
 
 
 function readStream(stream) {
@@ -312,7 +351,7 @@ function readStream(stream) {
 
             id = data[2]
 
-            allUsedSpaces.pushSnake(data[0], data[1], data[2]);
+            allUsedSpaces.pushSnake(data[0], data[1], data[2], data[4]);
 
             //console.log(allUsedSpaces)
         });

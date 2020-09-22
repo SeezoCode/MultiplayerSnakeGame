@@ -1,5 +1,5 @@
-let id = Math.floor(Math.random() * 20) + 1
-let url = 'http://192.168.1.135:8080/'
+//let id = Math.floor(Math.random() * 20) + 1
+//let url = 'http://192.168.1.135:8000/'
 
 class player {
     constructor(x, y, keyboard, name) {
@@ -13,7 +13,7 @@ class player {
         this.go = true;
         this.kbd = keyboard;
         this.snakeLength = -this.ctr
-        this.color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`;
+        this.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
 
         this.lastUsed = "";
         this.lastUsedIndex = ""
@@ -230,12 +230,6 @@ class player {
 
 //needed to run the game
 
-let cx = document.querySelector('canvas').getContext('2d');
-const scale = 20
-cx.width = 20 * 25
-cx.height = 20 * 25
-
-let speed = 300
 let repeats = 0;
 let discoveredCandy = false
 let fetched = false;
@@ -248,6 +242,10 @@ elem.appendChild(text)
 text = document.body.appendChild(elem)
 
 //required from server
+
+let game = document.getElementsByClassName("game")
+game[0].style.width = cx.width;
+game[0].style.height = cx.height;
 
 let usedSquaresX = [],
     usedSquaresY = [];
@@ -315,8 +313,8 @@ function undrawOtherPlayers(arrX, arrY) {
 
 
 
-function drawOtherPlayers(arrX = [], arrY) {
-    cx.fillStyle = 'gray';
+function drawOtherPlayers(arrX = [], arrY, color) {
+    cx.fillStyle = color;
     for (let i = 0; i < arrX.length; i++) {
         cx.fillRect(arrX[i], arrY[i], scale, scale);
     }
@@ -349,7 +347,7 @@ function fetchOK() {
     fetch(url, {
             method: 'POST',
             'content-Type': 'application/json',
-            body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy]),
+            body: JSON.stringify([usedSquaresX, usedSquaresY, id, discoveredCandy, players[0].color]),
             headers: new Headers(),
         })
         .then(response => response.json())
@@ -357,7 +355,7 @@ function fetchOK() {
             for (let i = 0; i < json[0].length; i++) {
                 if (json[0][i]) {
                     undrawOtherPlayers(serverPlayersX, serverPlayersY)
-                    drawOtherPlayers(json[0][i], json[1][i])
+                    drawOtherPlayers(json[0][i], json[1][i], json[5][i])
                 }
             }
 
@@ -404,7 +402,7 @@ function hold() { //game
         fetchOK()
         //checkAmmounthOfPlayers()
 
-        console.log(playerCount[0])
+        //console.log(playerCount[0])
 
         discoveredCandy = false
         usedSquaresX = [];
