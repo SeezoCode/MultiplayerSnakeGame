@@ -4,7 +4,7 @@ let playWithBots = 2            // enter number of bots
 let width = 800, height = 500;  // in px
 let scale = 20;                 // in px
 let speed = 250;                // in ms
-let numberOfMaxPlayers = 5      // to save time, this feature is clunky and sometimes a duplicate ID may occur.
+//let numberOfMaxPlayers = 5    // to save time, this feature is clunky and sometimes a duplicate ID may occur.
                                 // The solution is to reload the page or increase the number
 
 
@@ -24,7 +24,6 @@ let htmlFile = readFileSync('index.html', 'utf8')
 let finder = new PF.AStarFinder({
     allowDiagonal: false
 })
-let usedIDs = []
 
 const {
     networkInterfaces
@@ -47,10 +46,23 @@ for (const name of Object.keys(nets)) {
 }
 console.log(`http://${results[Object.keys(results)[0]][0]}:8000`)
 
-let file = `
-    ${htmlFile}
-    <script>
-    let id = Math.floor(Math.random() * ${numberOfMaxPlayers} * 8) + 1
+class assignID {
+    constructor() {
+        this.usedIDs = []
+    }
+
+    get assignID() {
+        for (let i = 0; ; i++) {
+            if (!this.usedIDs.includes(i)) {
+                this.usedIDs.push(i)
+                print("Assigned ID:", i)
+                return i
+            }
+        }
+    }
+}
+let IDAssigner = new assignID()
+let file = `    
     let url = "http://${results[Object.keys(results)[0]][0]}:8000"
     let cx = document.querySelector('canvas').getContext('2d');
     const scale = ${scale}
@@ -65,6 +77,7 @@ let randomX = null,
     randomY = null;
 let playerCount = 0
 let nowBot = Date.now()
+
 
 function addCandy(x = Math.floor(Math.random() * width),
                   y = Math.floor(Math.random() * height)) {
@@ -149,14 +162,7 @@ class botClass {
         this.path = []
         this.prolong = false
         this.color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`;
-        for (let i = 20; i < 60; i++) {
-            if (!usedIDs.includes(i)) {
-                this.id = i
-                usedIDs.push(i)
-                print("bot ID:", i)
-                break
-            }
-        }
+        this.id = IDAssigner.assignID
     }
 
     move() {
@@ -302,6 +308,8 @@ server.on('request', (request, response) => {
         });
         response.on('error', () => console.log("here"))
         //response.on('end', () => console.log('finish'))
+        response.write(htmlFile)
+        response.write(`<script>let id = ${IDAssigner.assignID}`)
         response.write(file)
         response.end()
         console.log("A new connection at:", request.connection.remoteAddress)

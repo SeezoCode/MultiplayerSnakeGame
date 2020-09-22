@@ -144,7 +144,7 @@ class player {
             this.tailX.push(this.x)
             this.tailY.push(this.y)
 
-            if (roundsToReset > 30) {
+            if (roundsToReset > 35) { // A value subject to change
                 cx.fillStyle = 'white'
                 cx.fillRect(0, 0, cx.width, cx.height)
                 roundsToReset = 0
@@ -296,9 +296,9 @@ function endGame() {
 }
 
 
-
 function undrawOtherPlayers(arrX, arrY) {
     cx.fillStyle = 'white'
+    //cx.fillRect(0, 0, cx.width, cx.height)
 
     for (let i = 0; i < arrX.length; i++) {
         //needs to loop one more time
@@ -310,7 +310,6 @@ function undrawOtherPlayers(arrX, arrY) {
     serverPlayersX = [];
     serverPlayersY = [];
 }
-
 
 
 function drawOtherPlayers(arrX = [], arrY, color) {
